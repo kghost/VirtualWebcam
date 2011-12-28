@@ -37,13 +37,9 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>.\Release\</OutDir>
-    <IntDir>.\Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\Debug\</OutDir>
-    <IntDir>.\Debug\</IntDir>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -56,16 +52,12 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DBG=0;WINVER=0x400;INC_OLE2;STRICT;WIN32;_WIN32;_MT;_DLL;_X86_=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AssemblerListingLocation>.\Release\</AssemblerListingLocation>
-      <PrecompiledHeaderOutputFile>.\Release\Filters.pch</PrecompiledHeaderOutputFile>
-      <ObjectFileName>.\Release\</ObjectFileName>
-      <ProgramDataBaseFileName>.\Release\</ProgramDataBaseFileName>
       <CallingConvention>StdCall</CallingConvention>
+      <AdditionalIncludeDirectories>$(CompleteWindowsSdkDir)\Samples\multimedia\directshow\baseclasses</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <TypeLibraryName>.\Release\Filters.tlb</TypeLibraryName>
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <TargetEnvironment>Win32</TargetEnvironment>
     </Midl>
@@ -73,22 +65,19 @@
       <Culture>0x0409</Culture>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
-    <Bscmake>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-      <OutputFile>.\Release\Filters.bsc</OutputFile>
-    </Bscmake>
+    <Bscmake />
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <LinkDLL>true</LinkDLL>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <OutputFile>..\Bin\VCam.ax</OutputFile>
-      <ImportLibrary>.\Release\VCam.lib</ImportLibrary>
       <StackReserveSize>2097152</StackReserveSize>
       <StackCommitSize>2097152</StackCommitSize>
       <EntryPointSymbol>DllEntryPoint%4012</EntryPointSymbol>
       <ModuleDefinitionFile>.\Filters.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>$(CompleteWindowsSdkDir)\Samples\multimedia\directshow\baseclasses\Release</AdditionalLibraryDirectories>
+      <OutputFile>$(OutDir)VirtualCamera.dll</OutputFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -100,18 +89,13 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>_WIN32_WINNT=0x0400;WINVER=0x0400;DBG=1;DEBUG;_DEBUG;INC_OLE2;STRICT;WIN32;_WIN32;_MT;_DLL;_X86_=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AssemblerListingLocation>.\Debug\</AssemblerListingLocation>
-      <PrecompiledHeaderOutputFile>.\Debug\Filters.pch</PrecompiledHeaderOutputFile>
-      <ObjectFileName>.\Debug\</ObjectFileName>
-      <ProgramDataBaseFileName>.\Debug\</ProgramDataBaseFileName>
       <CallingConvention>StdCall</CallingConvention>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>E:\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CompleteWindowsSdkDir)\Samples\multimedia\directshow\baseclasses</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <TypeLibraryName>.\Debug\Filters.tlb</TypeLibraryName>
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <TargetEnvironment>Win32</TargetEnvironment>
     </Midl>
@@ -119,23 +103,19 @@
       <Culture>0x0409</Culture>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
-    <Bscmake>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-      <OutputFile>.\Debug\Filters.bsc</OutputFile>
-    </Bscmake>
+    <Bscmake />
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <LinkDLL>true</LinkDLL>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <OutputFile>..\Bin\VCamD.ax</OutputFile>
-      <ImportLibrary>.\Debug\VCamD.lib</ImportLibrary>
+      <OutputFile>$(OutDir)VirtualCameraD.dll</OutputFile>
       <StackReserveSize>2097152</StackReserveSize>
       <StackCommitSize>2097152</StackCommitSize>
       <EntryPointSymbol>DllEntryPoint%4012</EntryPointSymbol>
       <ModuleDefinitionFile>.\Filters.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>E:\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses\Debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CompleteWindowsSdkDir)\Samples\multimedia\directshow\baseclasses\Debug</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
