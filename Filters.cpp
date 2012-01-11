@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <olectl.h>
 #include <dvdmedia.h>
+#include <Shlwapi.h>
+#include <stdio.h>
 #include "DibHelper.h"
 #include "filters.h"
 
@@ -35,7 +37,7 @@ CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) :
     CAutoLock cAutoLock(&m_cStateLock);
     // Create the one and only output pin
     m_paStreams = (CSourceStream **) new CVCamStream*[1];
-    m_paStreams[0] = new CVCamStream(phr, this, L"Virtual Cam");
+    m_paStreams[0] = new CVCamStream(phr, this, TEXT("Virtual Cam"));
 }
 
 HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
@@ -47,18 +49,37 @@ HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
         return CSource::QueryInterface(riid, ppv);
 }
 
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
+
 //////////////////////////////////////////////////////////////////////////
 // CVCamStream is the one and only output pin of CVCam which handles 
 // all the stuff.
 //////////////////////////////////////////////////////////////////////////
 CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
-    CSourceStream(NAME("Virtual Cam"),phr, pParent, pPinName), m_pParent(pParent),
-		m_iImageHeight(272), m_iImageWidth(480), m_rtFrameLength(FPS_5)
+    CSourceStream(NAME("Virtual Cam"),phr, pParent, pPinName),
+		m_pParent(pParent), m_rtFrameLength(FPS_5)
 {
-	m_rScreen.top = 100;
-	m_rScreen.left = 100;
-	m_rScreen.right = 580;
-	m_rScreen.bottom = 372;
+	TCHAR path[_MAX_PATH];
+	::GetModuleFileName((HINSTANCE)&__ImageBase, path, _MAX_PATH);
+	::PathRenameExtension(path, TEXT(".ini"));
+	m_rScreen.top = ::GetPrivateProfileInt(TEXT("setting"), TEXT("top"), 100, path);
+	m_rScreen.left = ::GetPrivateProfileInt(TEXT("setting"), TEXT("left"), 100, path);
+	m_rScreen.right = ::GetPrivateProfileInt(TEXT("setting"), TEXT("right"), 580, path);
+	m_rScreen.bottom = ::GetPrivateProfileInt(TEXT("setting"), TEXT("bottom"), 372, path);
+
+	if (m_rScreen.right <=  m_rScreen.left) m_rScreen.right = m_rScreen.left + 480;
+	if (m_rScreen.bottom <=  m_rScreen.top) m_rScreen.bottom = m_rScreen.top + 360;
+
+	TCHAR buf[10];
+	_snwprintf_s(buf, sizeof(buf), TEXT("%d"), m_rScreen.top);
+	::WritePrivateProfileString(TEXT("setting"), TEXT("top"), buf, path);
+	_snwprintf_s(buf, sizeof(buf), TEXT("%d"), m_rScreen.left);
+	::WritePrivateProfileString(TEXT("setting"), TEXT("left"), buf, path);
+	_snwprintf_s(buf, sizeof(buf), TEXT("%d"), m_rScreen.right);
+	::WritePrivateProfileString(TEXT("setting"), TEXT("right"), buf, path);
+	_snwprintf_s(buf, sizeof(buf), TEXT("%d"), m_rScreen.bottom);
+	::WritePrivateProfileString(TEXT("setting"), TEXT("bottom"), buf, path);
+
     GetMediaType(1, &m_mt);
 }
 
@@ -143,8 +164,6 @@ STDMETHODIMP CVCamStream::Notify(IBaseFilter * pSender, Quality q)
 HRESULT CVCamStream::SetMediaType(const CMediaType *pMediaType)
 {
     CAutoLock cAutoLock(m_pFilter->pStateLock());
-
-    DECLARE_PTR(VIDEOINFOHEADER, pvi, pMediaType->Format());
     HRESULT hr = CSourceStream::SetMediaType(pMediaType);
     return hr;
 } // SetMediaType
@@ -178,8 +197,8 @@ HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt)
     pvi->bmiHeader.biCompression = BI_RGB;
     pvi->bmiHeader.biBitCount    = 24;
     pvi->bmiHeader.biSize       = sizeof(BITMAPINFOHEADER);
-	pvi->bmiHeader.biWidth      = m_iImageWidth;
-	pvi->bmiHeader.biHeight     = m_iImageHeight;
+	pvi->bmiHeader.biWidth      = m_rScreen.right - m_rScreen.left;
+	pvi->bmiHeader.biHeight     = m_rScreen.bottom - m_rScreen.top;
     pvi->bmiHeader.biPlanes     = 1;
     pvi->bmiHeader.biSizeImage  = GetBitmapSize(&pvi->bmiHeader);
     pvi->bmiHeader.biClrImportant = 0;
@@ -267,8 +286,8 @@ HRESULT CVCamStream::OnThreadDestroy()
 HRESULT STDMETHODCALLTYPE CVCamStream::SetFormat(AM_MEDIA_TYPE *pmt)
 {
 	DECLARE_PTR(VIDEOINFOHEADER, pvi, pmt->pbFormat);
-	if (pvi->bmiHeader.biHeight != m_iImageHeight ||
-		pvi->bmiHeader.biWidth != m_iImageWidth ||
+	if (pvi->bmiHeader.biHeight != m_rScreen.bottom - m_rScreen.top ||
+		pvi->bmiHeader.biWidth != m_rScreen.right - m_rScreen.left ||
 		pvi->bmiHeader.biCompression != BI_RGB ||
 		pvi->bmiHeader.biBitCount != 24)
 		return VFW_E_INVALIDMEDIATYPE;
@@ -308,8 +327,8 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     pvi->bmiHeader.biCompression = BI_RGB;
     pvi->bmiHeader.biBitCount    = 24;
     pvi->bmiHeader.biSize       = sizeof(BITMAPINFOHEADER);
-    pvi->bmiHeader.biWidth      = m_iImageWidth;
-    pvi->bmiHeader.biHeight     = m_iImageHeight;
+    pvi->bmiHeader.biWidth      = m_rScreen.right - m_rScreen.left;
+	pvi->bmiHeader.biHeight     = m_rScreen.bottom - m_rScreen.top;
     pvi->bmiHeader.biPlanes     = 1;
     pvi->bmiHeader.biSizeImage  = GetBitmapSize(&pvi->bmiHeader);
     pvi->bmiHeader.biClrImportant = 0;
@@ -329,21 +348,21 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     
     pvscc->guid = FORMAT_VideoInfo;
     pvscc->VideoStandard = AnalogVideo_None;
-    pvscc->InputSize.cx = m_iImageWidth;
-    pvscc->InputSize.cy = m_iImageHeight;
-    pvscc->MinCroppingSize.cx = m_iImageWidth;
-    pvscc->MinCroppingSize.cy = m_iImageHeight;
-    pvscc->MaxCroppingSize.cx = m_iImageWidth;
-    pvscc->MaxCroppingSize.cy = m_iImageHeight;
-    pvscc->CropGranularityX = m_iImageWidth;
-    pvscc->CropGranularityY = m_iImageHeight;
+    pvscc->InputSize.cx = m_rScreen.right - m_rScreen.left;
+	pvscc->InputSize.cy = m_rScreen.bottom - m_rScreen.top;
+    pvscc->MinCroppingSize.cx = m_rScreen.right - m_rScreen.left;
+    pvscc->MinCroppingSize.cy = m_rScreen.bottom - m_rScreen.top;
+    pvscc->MaxCroppingSize.cx = m_rScreen.right - m_rScreen.left;
+    pvscc->MaxCroppingSize.cy = m_rScreen.bottom - m_rScreen.top;
+    pvscc->CropGranularityX = m_rScreen.right - m_rScreen.left;
+    pvscc->CropGranularityY = m_rScreen.bottom - m_rScreen.top;
     pvscc->CropAlignX = 0;
     pvscc->CropAlignY = 0;
 
-    pvscc->MinOutputSize.cx = m_iImageWidth;
-    pvscc->MinOutputSize.cy = m_iImageHeight;
-    pvscc->MaxOutputSize.cx = m_iImageWidth;
-    pvscc->MaxOutputSize.cy = m_iImageHeight;
+    pvscc->MinOutputSize.cx = m_rScreen.right - m_rScreen.left;
+    pvscc->MinOutputSize.cy = m_rScreen.bottom - m_rScreen.top;
+    pvscc->MaxOutputSize.cx = m_rScreen.right - m_rScreen.left;
+    pvscc->MaxOutputSize.cy = m_rScreen.bottom - m_rScreen.top;
     pvscc->OutputGranularityX = 0;
     pvscc->OutputGranularityY = 0;
     pvscc->StretchTapsX = 0;
@@ -352,8 +371,8 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     pvscc->ShrinkTapsY = 0;
     pvscc->MinFrameInterval = 200000;   //50 fps
     pvscc->MaxFrameInterval = 50000000; // 0.2 fps
-    pvscc->MinBitsPerSecond = (m_iImageWidth * m_iImageHeight * 3 * 8) / 5;
-    pvscc->MaxBitsPerSecond = m_iImageWidth * m_iImageHeight * 4 * 8 * 50;
+	pvscc->MinBitsPerSecond = ((m_rScreen.bottom - m_rScreen.top) * (m_rScreen.right - m_rScreen.left) * 3 * 8) / 5;
+    pvscc->MaxBitsPerSecond = (m_rScreen.bottom - m_rScreen.top) * (m_rScreen.right - m_rScreen.left) * 4 * 8 * 50;
 
     return S_OK;
 }

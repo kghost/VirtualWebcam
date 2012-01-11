@@ -73,6 +73,4 @@ private:
     RECT m_rScreen;                     // Rect containing entire screen coordinates
     int m_nCurrentBitDepth;             // Screen bit depth
     CMediaType m_MediaType;
-    int m_iImageHeight;
-    int m_iImageWidth;
 };
